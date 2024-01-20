@@ -86,13 +86,13 @@ def evaluation(model, x_train, x_test, y_train, y_test):
         model[key].fit(x_train, y_train)
         
         # Make predictions
-        predictions = model[key].predict(x_test)
+        predictions = model[key].predict(x_test.values)
         
         # Calculate metrics
-        accuracy[key] = accuracy_score(y_test, predictions)
-        precision[key] = precision_score(y_test, predictions)
-        recall[key] = recall_score(y_test, predictions)
-        f1[key] = f1_score(y_test, predictions)
+        accuracy[key] = accuracy_score(y_test.values, predictions)
+        precision[key] = precision_score(y_test.values, predictions)
+        recall[key] = recall_score(y_test.values, predictions)
+        f1[key] = f1_score(y_test.values, predictions)
 
 
     df_model = pd.DataFrame(index=model.keys(), columns=['Accuracy', 'Precision', 'Recall', 'F1 Score'])
