@@ -1,5 +1,8 @@
 import pandas as pd 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.model_selection import train_test_split,GridSearchCV, RandomizedSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 def data_summary(dataframe):
     """
@@ -8,7 +11,7 @@ def data_summary(dataframe):
     Parameters:
     ----------------
         dataframe: dataframe
-                dataframe that wants to apply
+                dataframe that wants to apply  
                 
     Returns:
     ---------------
@@ -28,55 +31,27 @@ def data_summary(dataframe):
 
 
 
-def categoric_data(dataframe, cat_th = 10, car_th=20):
-    """ 
-    It serves to determine whether the variables in the dataset are categorical, numerical or cardinal variables.
+def evaluation(model, x_train, x_test, y_train, y_test):
+    """
+    It returns the  results of the models and evaluations
 
     Parameters:
     ----------------
-        dataframe: dataframe
-                dataframe that wants to apply
-        cat_th: int, optional
-                Class threshold for numeric but categorical variables
-        car_th: int, optional
-                Class threshold for categorical but cardinal variables
+        model: dict
+                dictionary format for models that wants to apply
+        x_train: array
+                train set without target column
+        y_train: array
+                train target column
+        x_test: array
+                test set without target column
+        y_test: array
+                test target column
                 
     Returns:
     ---------------
-    cat_cols: list
-            Categorical variable list
-    num_cols: list
-            Numerical variable list
-    cat_but_car: list
-            Categorical but cardinal variable list
-    num_but_cat: list
-            Numerical but categorical variable list
-            
-    Notes:
-    ---------------
-    cat_cols + num_cols + cat_but_car = total variables
-    num_but_cat variables are in cat_cols.
+    df_model: Dataframe that include accuracy, precision, recall and F1 score
     """
-    
-    cat_cols = [col for col in dataframe.columns if str(dataframe.dtypes[col]) in ["category", "bool", "object"]]
-    num_but_cat = [col for col in dataframe.columns if str(dataframe.dtypes[col]) in ["int64", "float64"] and dataframe[col].nunique() < cat_th]
-    cat_but_car = [col for col in dataframe.columns if str(dataframe.dtypes[col]) in ["category", "object"] and dataframe[col].nunique() > car_th]
-    cat_cols = cat_cols + num_but_cat
-    cat_cols = [col for col in cat_cols if col not in cat_but_car]
-    num_cols = [col for col in dataframe.columns if str(dataframe[col].dtypes) in ["int64", "float64"]]
-    num_cols = [col for col in num_cols if col not in num_but_cat]
-    
-    print(f"Observations: {dataframe.shape[0]}")
-    print(f"Variebles: {dataframe.shape[1]}")
-    print(f"cat_cols: {len(cat_cols)}")
-    print(f"num_cols: {len(num_cols)}")
-    print(f"cat_but_car: {len(cat_but_car)}")
-    print(f"num_but_cat: {len(num_but_cat)}")
-    
-    return cat_cols, num_cols, cat_but_car
-
-
-def evaluation(model, x_train, x_test, y_train, y_test):
 
     accuracy, precision, recall, f1 = {}, {}, {}, {}
 
@@ -103,3 +78,86 @@ def evaluation(model, x_train, x_test, y_train, y_test):
 
 
     return df_model
+
+
+def rf_best_parameters(X_train, X_test, y_train, y_test):
+    """
+     it is find best parameters for Random Forest Algorithm by using RandomizedSearchCV
+
+    Parameters:
+    ----------------
+        x_train: array
+                train set without target column
+        y_train: array
+                train target column
+        x_test: array
+                test set without target column
+        y_test: array
+                test target column
+                
+    Returns:
+    ---------------
+    rf_randomcv: best parameters
+    """
+    rf_params = {'bootstrap': [True],
+        'max_depth': [80, 90, 100],
+        'max_features': ['sqrt', 'log2'],
+        'n_estimators': [100, 200, 300],
+        'criterion': ['gini', 'entropy', 'log_loss']}
+    rf = RandomForestClassifier()
+    rf_randomcv = RandomizedSearchCV(estimator=rf, param_distributions=rf_params, n_iter=100, cv=5, scoring='accuracy').fit(X_train,y_train)
+    print("Best training score: {} with parameters: {}".format(rf_randomcv.best_score_, rf_randomcv.best_params_))
+    print()
+
+    rf = RandomForestClassifier(**rf_randomcv.best_params_)
+    rf.fit(X_train, y_train)
+    
+    y_pred = rf.predict(X_test)
+    
+    
+    accuracy_test = accuracy_score(y_test, y_pred)
+    print("Test score: {}".format(accuracy_test))
+    print()
+
+    return rf_randomcv
+
+
+def knn_best_paramaters(X_train, X_test, y_train, y_test):
+        """
+        it is find best parameters for KNN Algorithm by using RandomizedSearchCV
+
+        Parameters:
+        ----------------
+        x_train: array
+                train set without target column
+        y_train: array
+                train target column
+        x_test: array
+                test set without target column
+        y_test: array
+                test target column
+                
+        Returns:
+        ---------------
+        knn_randomcv: best parameters
+        """
+        knn_grid = { 'n_neighbors': list(range(1,21)),
+                   'weights': ["uniform","distance"],
+                   'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute']
+                }
+        knn = KNeighborsClassifier()
+        knn_randomcv = RandomizedSearchCV(estimator=knn, param_distributions=knn_grid, n_iter=100, cv = 5, scoring = "accuracy").fit(X_train,y_train)
+        print("Best training score: {} with parameters: {}".format(knn_randomcv.best_score_, knn_randomcv.best_params_))
+        print()
+    
+        knn = KNeighborsClassifier(**knn_randomcv.best_params_)
+        knn.fit(X_train, y_train)
+        
+        y_pred = knn.predict(X_test)
+        
+        
+        accuracy_test = accuracy_score(y_test, y_pred)
+        print("Test score: {}".format(accuracy_test))
+        print()
+        
+        return knn_randomcv
