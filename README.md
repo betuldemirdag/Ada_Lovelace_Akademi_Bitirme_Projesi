@@ -1,3 +1,15 @@
+# Binary Classification with a Bank Churn Dataset from Kaggle
+
+This repo include a kaggle playground prediction competition.
+
+https://www.kaggle.com/competitions/playground-series-s4e1 
+
+## Goal
+
+The goal of this competition is to predict whether a bank customer will continue with their account or close it.
+
+## Dataset 
+
 * Customer ID: A unique identifier for each customer
 * Surname: The customer's surname or last name
 * Credit Score: A numerical value representing the customer's credit score
