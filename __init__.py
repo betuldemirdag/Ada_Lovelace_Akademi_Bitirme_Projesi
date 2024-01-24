@@ -57,7 +57,7 @@ def evaluation(model, x_train, x_test, y_train, y_test):
 
     for key in model.keys():
         
-        # Fit the classifier
+        # Fit the model
         model[key].fit(x_train, y_train)
         
         # Make predictions
